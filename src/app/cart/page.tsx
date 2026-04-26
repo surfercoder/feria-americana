@@ -3,7 +3,7 @@ import CartContent from './CartContent';
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'Carrito | Feria Americana',
+  title: 'Carrito',
   description: 'Revisa los productos en tu carrito y finaliza tu compra.',
 };
 
