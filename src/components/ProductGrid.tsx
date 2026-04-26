@@ -196,16 +196,12 @@ export default function ProductGrid({ products }: { products: Product[] }) {
     const scrollEl = gridRef.current.querySelector('[style*="overflow"]') as HTMLElement | null;
     if (!scrollEl) return;
 
-    // Only restore scroll on back/forward navigation, not on fresh loads
-    const navType = typeof window !== 'undefined' && window.performance?.navigation?.type;
-    const isBackForward = navType === 2;
-    if (isBackForward) {
-      const saved = sessionStorage.getItem('grid-scroll-top');
-      if (saved) {
+    // Restore scroll position if saved (works for client-side back navigation)
+    const saved = sessionStorage.getItem('grid-scroll-top');
+    if (saved) {
+      requestAnimationFrame(() => {
         scrollEl.scrollTop = Number(saved);
-      }
-    } else {
-      sessionStorage.removeItem('grid-scroll-top');
+      });
     }
 
     // Save scroll position on scroll (debounced)
