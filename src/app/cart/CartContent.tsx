@@ -117,7 +117,14 @@ export default function CartContent({ products }: { products: Product[] }) {
           total,
         }),
       });
-      if (!res.ok) throw new Error('No se pudo enviar el pedido.');
+      if (!res.ok) {
+        const data = await res.json();
+        if (res.status === 409) {
+          dispatch({ type: 'SUBMIT_ERROR', error: data.error || 'Algunos productos ya fueron vendidos.' });
+          return;
+        }
+        throw new Error(data.error || 'No se pudo enviar el pedido.');
+      }
       clearCart();
       dispatch({ type: 'RESET' });
       if (formRef.current) formRef.current.reset();

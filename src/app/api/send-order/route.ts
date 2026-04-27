@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import nodemailer from 'nodemailer';
-import { updateProductStatus } from '../../../lib/products';
+import { updateProductStatus, getProductById } from '../../../lib/products';
 import { revalidatePath } from 'next/cache';
 import type { Product } from '@/lib/products';
 
@@ -10,6 +10,21 @@ export async function POST(req: NextRequest) {
 
   if (!name || !email || !phone || !products || !total) {
     return NextResponse.json({ error: 'Datos incompletos' }, { status: 400 });
+  }
+
+  // Check that none of the products are already sold
+  const alreadySold: string[] = [];
+  for (const p of products) {
+    const product = await getProductById(p.id);
+    if (product?.status === 'vendido') {
+      alreadySold.push(product.title);
+    }
+  }
+  if (alreadySold.length > 0) {
+    return NextResponse.json(
+      { error: `Los siguientes productos ya fueron vendidos: ${alreadySold.join(', ')}`, soldProducts: alreadySold },
+      { status: 409 }
+    );
   }
 
   // Mark products as sold in Supabase
