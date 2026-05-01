@@ -70,9 +70,9 @@ function formReducer(state: FormState, action: FormAction): FormState {
 }
 
 export default function CartContent({ products }: { products: Product[] }) {
-  const { cartItems, removeFromCart, clearCart } = useCart();
+  const { cartItems, removeFromCart, clearCart, markAsPurchasing } = useCart();
   const [form, dispatch] = useReducer(formReducer, initialFormState);
-  const router = useRouter();
+  const { push } = useRouter();
   const formRef = useRef<HTMLFormElement>(null);
 
   const cartProducts = products.filter((p) => cartItems.includes(p.id));
@@ -106,6 +106,7 @@ export default function CartContent({ products }: { products: Product[] }) {
     }
 
     try {
+      markAsPurchasing(cartProducts.map((p) => p.id));
       const res = await fetch('/api/send-order', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -128,7 +129,7 @@ export default function CartContent({ products }: { products: Product[] }) {
       clearCart();
       dispatch({ type: 'RESET' });
       if (formRef.current) formRef.current.reset();
-      router.push('/thanks');
+      push('/thanks');
     } catch {
       dispatch({ type: 'SUBMIT_ERROR', error: 'Hubo un error al enviar el pedido. Intenta de nuevo.' });
     }

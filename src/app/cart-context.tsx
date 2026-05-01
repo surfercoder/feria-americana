@@ -1,9 +1,9 @@
 "use client";
 
-import React, { createContext, useContext, useState, useEffect, useCallback, useRef, ReactNode } from 'react';
+import React, { createContext, use, useState, useEffect, useCallback, useRef, ReactNode } from 'react';
 import { createClient } from '@supabase/supabase-js';
 
-export interface SoldNotification {
+interface SoldNotification {
   productId: number;
   title: string;
 }
@@ -15,6 +15,7 @@ interface CartContextType {
   clearCart: () => void;
   soldNotifications: SoldNotification[];
   dismissNotification: (productId: number) => void;
+  markAsPurchasing: (ids: number[]) => void;
 }
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
@@ -28,6 +29,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const [cartItems, setCartItems] = useState<number[]>([]);
   const [soldNotifications, setSoldNotifications] = useState<SoldNotification[]>([]);
   const cartItemsRef = useRef<number[]>([]);
+  const purchasingIdsRef = useRef<Set<number>>(new Set());
 
   // Keep ref in sync with state so the realtime callback always sees current cart
   useEffect(() => {
@@ -49,7 +51,8 @@ export function CartProvider({ children }: { children: ReactNode }) {
           const newRecord = payload.new as { id: number; status: string; title: string };
           if (
             newRecord.status === 'vendido' &&
-            cartItemsRef.current.includes(newRecord.id)
+            cartItemsRef.current.includes(newRecord.id) &&
+            !purchasingIdsRef.current.has(newRecord.id)
           ) {
             // Remove the sold product from cart
             setCartItems((prev) => prev.filter((id) => id !== newRecord.id));
@@ -82,15 +85,19 @@ export function CartProvider({ children }: { children: ReactNode }) {
     setSoldNotifications((prev) => prev.filter((n) => n.productId !== productId));
   }, []);
 
+  const markAsPurchasing = useCallback((ids: number[]) => {
+    ids.forEach((id) => purchasingIdsRef.current.add(id));
+  }, []);
+
   return (
-    <CartContext.Provider value={{ cartItems, addToCart, removeFromCart, clearCart, soldNotifications, dismissNotification }}>
+    <CartContext.Provider value={{ cartItems, addToCart, removeFromCart, clearCart, soldNotifications, dismissNotification, markAsPurchasing }}>
       {children}
     </CartContext.Provider>
   );
 }
 
 export function useCart() {
-  const ctx = useContext(CartContext);
+  const ctx = use(CartContext);
   if (!ctx) throw new Error('useCart must be used within a CartProvider');
   return ctx;
-} 
+}
