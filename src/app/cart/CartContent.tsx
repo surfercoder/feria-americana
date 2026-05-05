@@ -51,7 +51,7 @@ function formReducer(state: FormState, action: FormAction): FormState {
     case 'SET_FIELD':
       return { ...state, [action.field]: action.value };
     case 'SET_FIELD_ERRORS':
-      return { ...state, fieldErrors: action.fieldErrors };
+      return { ...state, fieldErrors: action.fieldErrors, loading: false };
     case 'SET_ERROR':
       return { ...state, error: action.error };
     case 'SHOW_CHECKOUT':
